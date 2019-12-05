@@ -22,3 +22,6 @@ def login(provider):
     if provider == 'google':
         return "Hello, Google!"
     return render_template('login.html')
+https://uniwebsidad.com/libros/explore-flask/chapter-6/url-converters
+    https://stackoverflow.com/questions/50426137/flask-get-clicked-link-info-and-display-on-rendered-page
+        https://gist.github.com/Jaza/61f879f577bc9d06029e
