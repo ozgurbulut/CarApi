@@ -28,3 +28,4 @@ https://uniwebsidad.com/libros/explore-flask/chapter-6/url-converters
 #Onemli ? isaretini buldum
 https://pythonise.com/series/learning-flask/flask-query-strings
 https://www.digitalocean.com/community/tutorials/how-to-scrape-web-pages-with-beautiful-soup-and-python-3
+    https://www.digitalocean.com/community/tutorials/how-to-scrape-web-pages-with-beautiful-soup-and-python-3
