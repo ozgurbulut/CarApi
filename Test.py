@@ -1,4 +1,4 @@
-#import requests
+import requests
 from bs4 import BeautifulSoup
 from urllib.request import urlopen as uReq  # Web client
 import mysql.connector
@@ -10,12 +10,12 @@ myconn = mysql.connector.connect(
   database="sam"
 )
 
-def insert_cars(carName,carYear,carModel,carExtColor,carInf):
+def insert_cars(carName,carYear,extColor,intColor,transmission,price,driveTrain):
     cur = myconn.cursor()
-    sql = '''INSERT INTO sam.cars (car_name, car_year,car_model,car_ext_color,car_int_color,transmission,price,number)
-            VALUES (%s, %s, %s, %s,%s,%s,%s,%s)
+    sql = '''INSERT INTO sam.cars (car_name, car_year,car_model,car_ext_color,car_int_color,transmission,price,number,drivetrain)
+            VALUES (%s, %s, %s, %s,%s,%s,%s,%s,%s)
             '''
-    val = (carName,carYear,carModel,carExtColor,carInf,carYear,carModel,carExtColor)
+    val = (carName,carYear,'---',extColor,intColor,transmission,price,'---',driveTrain)
     try:
         cur.execute(sql,val)
         myconn.commit()
@@ -30,23 +30,49 @@ uClient.close()
 
 bmw_names = page_soup.findAll("h2", {"class": "listing-row__title"})
 bmw_color = page_soup.findAll("ul",{"class": "listing-row__meta"})
+bmw_price = page_soup.findAll("span",{"class": "listing-row__price "})
+bmw_number = page_soup.findAll("span",{"class": "dni-replace-3214737062"})
+
+
+'''
 #Gereksiz karakterleri temizliyoruz
 car_name_list=[]
-for i in range(len(bmw_names)):
-    clean_car=str(bmw_names[i].getText)
-    clean_car =clean_car.replace('<bound method Tag.get_text of ',"")
-    clean_car =clean_car.replace('<h2 class="listing-row__title">',"")
-    clean_car =clean_car.replace("</h2>>","")
-    clean_car=clean_car.replace("\n","")
-    clean_car=clean_car.replace("","")
-    clean_car = clean_car[33:len(clean_car)]
-    clean_car='2'+clean_car
-    car_name_list.append(clean_car)
-
 extColor=[]
 intColor=[]
 transmission=[]
 driveTrain=[]
+year=[]
+price=[]
+
+for i in range(len(bmw_price)):
+    clean_bmw_price = str(bmw_price[i].getText)
+    clean_bmw_price =clean_bmw_price.replace('<bound method Tag.get_text of ',"")
+    clean_bmw_price =clean_bmw_price.replace('<span class="listing-row__price-msrp">' ,"")
+    clean_bmw_price =clean_bmw_price.replace('<span class="listing-row__mileage">' ,"")
+    clean_bmw_price =clean_bmw_price.replace('<span class="listing-row__price ">' ,"")
+    clean_bmw_price =clean_bmw_price.replace('</span>',"")
+    clean_bmw_price =clean_bmw_price.replace('</div>>',"")
+    clean_bmw_price =clean_bmw_price.replace('MSRP',"")
+    clean_bmw_price =clean_bmw_price.replace('>',"")
+    clean_bmw_price =clean_bmw_price.replace("['","")
+
+    clean_bmw_price = clean_bmw_price.split()
+    price.append(clean_bmw_price)
+
+#Sitede son 3 price degeri yok eksik değerleri 0 olarak giriyorum
+for x in range(47,50):
+    price.append('0')
+for k in range(len(price)):
+    print(price[k])
+
+
+
+
+
+
+
+        #bmw_price =bmw_price.replace('<span class="listing-row__price">',"")
+
 for i in range(len(bmw_color)):
     clean_car=str(bmw_names[i].getText)
     clean_car =clean_car.replace('<bound method Tag.get_text of ',"")
@@ -56,6 +82,8 @@ for i in range(len(bmw_color)):
     clean_car=clean_car.replace("","")
     clean_car = clean_car[33:len(clean_car)]
     clean_car='2'+clean_car
+    #print(clean_car)
+    car_name_list.append(clean_car)
 
     clean_bmw_color = str(bmw_color[i].getText)
     clean_bmw_color =clean_bmw_color.replace('<bound method Tag.get_text of ',"")
@@ -70,20 +98,17 @@ for i in range(len(bmw_color)):
     clean_bmw_color=clean_bmw_color.replace('           ',"")
     clean_bmw_color=clean_bmw_color.replace('. ',"")
     clean_bmw_color = clean_bmw_color.split()
-    for i in range(len(clean_bmw_color) // 8):
-        extColor.append(clean_bmw_color[i+1])
-        intColor.append(clean_bmw_color[i+3])
-        transmission.append(clean_bmw_color[i+5])
-        driveTrain.append(clean_bmw_color[i+7])
-    insert_cars(car_name_list[i],extColor[i],intColor[i],transmission[i],driveTrain[i])
 
-'''print(len(car_name_list))
-print(len(extColor))
-print(len(intColor))
-print(len(transmission))
-print(len(driveTrain))
-#print(clean_bmw_color)
-'''
+
+    for j in range(len(clean_bmw_color) // 8):
+        extColor.append(clean_bmw_color[j+1])
+        intColor.append(clean_bmw_color[j+3])
+        transmission.append(clean_bmw_color[j+5])
+        driveTrain.append(clean_bmw_color[j+7])
+        year.append(clean_car[0:4])
+    insert_cars(car_name_list[i],year[i],extColor[i],intColor[i],transmission[i],str(price[i]),driveTrain[i])
+
+
 
 #for dongusu koy
 
@@ -91,3 +116,4 @@ print(len(driveTrain))
 
 
 #print(clean_bmw_color)
+'''
