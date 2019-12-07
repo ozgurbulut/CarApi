@@ -10,12 +10,12 @@ myconn = mysql.connector.connect(
   database="sam"
 )
 
-def insert_cars(carName,carYear,extColor,intColor,transmission,price,driveTrain):
+def insert_cars(carName,carYear,extColor,intColor,transmission,price,driveTrain,number):
     cur = myconn.cursor()
     sql = '''INSERT INTO sam.cars (car_name, car_year,car_model,car_ext_color,car_int_color,transmission,price,number,drivetrain)
             VALUES (%s, %s, %s, %s,%s,%s,%s,%s,%s)
             '''
-    val = (carName,carYear,'---',extColor,intColor,transmission,price,'---',driveTrain)
+    val = (carName,carYear,'---',extColor,intColor,transmission,price,number,driveTrain)
     try:
         cur.execute(sql,val)
         myconn.commit()
@@ -28,14 +28,6 @@ uClient = uReq(page_url)
 page_soup = BeautifulSoup(uClient.read(), "html.parser")
 uClient.close()
 
-bmw_names = page_soup.findAll("h2", {"class": "listing-row__title"})
-bmw_color = page_soup.findAll("ul",{"class": "listing-row__meta"})
-bmw_price = page_soup.findAll("span",{"class": "listing-row__price "})
-bmw_number = page_soup.findAll("span",{"class": "dni-replace-3214737062"})
-
-
-'''
-#Gereksiz karakterleri temizliyoruz
 car_name_list=[]
 extColor=[]
 intColor=[]
@@ -43,6 +35,40 @@ transmission=[]
 driveTrain=[]
 year=[]
 price=[]
+number=[]
+model=[]
+
+bmw_names = page_soup.findAll("h2", {"class": "listing-row__title"})
+bmw_color = page_soup.findAll("ul",{"class": "listing-row__meta"})
+bmw_price = page_soup.findAll("span",{"class": "listing-row__price "})
+bmw_number = page_soup.findAll("div",{"class": "listing-row__phone obscure"})
+
+
+for o in range(len(bmw_number)):
+    clean_bmw_number = str(bmw_number[o].getText)
+    clean_bmw_number =clean_bmw_number.replace('<bound method Tag.get_text of <div class="listing-row__phone obscure">',"")
+    clean_bmw_number =clean_bmw_number.replace('<span>',"")
+    clean_bmw_number =clean_bmw_number.replace('</span>',"")
+    clean_bmw_number =clean_bmw_number.replace('</div>>',"")
+    clean_bmw_number =clean_bmw_number.replace('()',"")
+    clean_bmw_number =clean_bmw_number.replace('<span class="dni-replace-',"")
+    clean_bmw_number =clean_bmw_number.replace('</div>>',"")
+    clean_bmw_number =clean_bmw_number.replace('<div class="obscured-placeholder">',"")
+    clean_bmw_number =clean_bmw_number.replace('-</div>',"")
+    clean_bmw_number =clean_bmw_number.replace('">(',"")
+    clean_bmw_number =clean_bmw_number.replace(') ',"")
+    clean_bmw_number =clean_bmw_number.replace('-',"")
+    clean_bmw_number = clean_bmw_number.split()
+    number.append(clean_bmw_number)
+
+
+number.append('0')
+#print(number)
+
+
+
+#Gereksiz karakterleri temizliyoruz
+
 
 for i in range(len(bmw_price)):
     clean_bmw_price = str(bmw_price[i].getText)
@@ -62,8 +88,7 @@ for i in range(len(bmw_price)):
 #Sitede son 3 price degeri yok eksik değerleri 0 olarak giriyorum
 for x in range(47,50):
     price.append('0')
-for k in range(len(price)):
-    print(price[k])
+
 
 
 
@@ -106,7 +131,7 @@ for i in range(len(bmw_color)):
         transmission.append(clean_bmw_color[j+5])
         driveTrain.append(clean_bmw_color[j+7])
         year.append(clean_car[0:4])
-    insert_cars(car_name_list[i],year[i],extColor[i],intColor[i],transmission[i],str(price[i]),driveTrain[i])
+    insert_cars(car_name_list[i],year[i],extColor[i],intColor[i],transmission[i],str(price[i]),str(number[i]),driveTrain[i])
 
 
 
@@ -116,4 +141,3 @@ for i in range(len(bmw_color)):
 
 
 #print(clean_bmw_color)
-'''
