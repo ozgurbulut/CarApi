@@ -10,12 +10,12 @@ myconn = mysql.connector.connect(
   database="sam"
 )
 
-def insert_cars(carName,carYear,extColor,intColor,transmission,price,driveTrain,number):
+def insert_cars(carName,carYear,carModel,extColor,intColor,transmission,price,driveTrain,number):
     cur = myconn.cursor()
     sql = '''INSERT INTO sam.cars (car_name, car_year,car_model,car_ext_color,car_int_color,transmission,price,number,drivetrain)
             VALUES (%s, %s, %s, %s,%s,%s,%s,%s,%s)
             '''
-    val = (carName,carYear,'---',extColor,intColor,transmission,price,number,driveTrain)
+    val = (carName,carYear,carModel,extColor,intColor,transmission,price,number,driveTrain)
     try:
         cur.execute(sql,val)
         myconn.commit()
@@ -63,6 +63,7 @@ for o in range(len(bmw_number)):
 
 
 number.append('0')
+
 #print(number)
 
 
@@ -86,18 +87,12 @@ for i in range(len(bmw_price)):
     price.append(clean_bmw_price)
 
 #Sitede son 3 price degeri yok eksik değerleri 0 olarak giriyorum
-for x in range(47,50):
+for x in range(47,52):
     price.append('0')
 
 
-
-
-
-
-
-
         #bmw_price =bmw_price.replace('<span class="listing-row__price">',"")
-
+bmw_color_clean_text=['<bound method Tag.get_text of ','<h2 class="listing-row__title">','</h2>>','\n','']
 for i in range(len(bmw_color)):
     clean_car=str(bmw_names[i].getText)
     clean_car =clean_car.replace('<bound method Tag.get_text of ',"")
@@ -109,7 +104,7 @@ for i in range(len(bmw_color)):
     clean_car='2'+clean_car
     #print(clean_car)
     car_name_list.append(clean_car)
-
+    model.append(clean_car[5:len(clean_car)])
     clean_bmw_color = str(bmw_color[i].getText)
     clean_bmw_color =clean_bmw_color.replace('<bound method Tag.get_text of ',"")
     clean_bmw_color=clean_bmw_color.replace("\n","")
@@ -131,13 +126,5 @@ for i in range(len(bmw_color)):
         transmission.append(clean_bmw_color[j+5])
         driveTrain.append(clean_bmw_color[j+7])
         year.append(clean_car[0:4])
-    insert_cars(car_name_list[i],year[i],extColor[i],intColor[i],transmission[i],str(price[i]),str(number[i]),driveTrain[i])
+    insert_cars(car_name_list[i],year[i],str(model[i]),extColor[i],intColor[i],transmission[i],str(price[i]),driveTrain[i],str(number[i]))
 
-
-
-#for dongusu koy
-
-#print(extColor)
-
-
-#print(clean_bmw_color)
