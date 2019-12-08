@@ -31,3 +31,5 @@ https://www.digitalocean.com/community/tutorials/how-to-scrape-web-pages-with-be
     https://www.digitalocean.com/community/tutorials/how-to-scrape-web-pages-with-beautiful-soup-and-python-3
 https://www.cars.com/for-sale/searchresults.action/?dealerType=localOnly&mkId=20005&page=1&perPage=50&searchSource=GN_REFINEMENT&sort=relevance&zc=90006
     #tek sayfada 50 sorgu
+
+    pip install Flask
