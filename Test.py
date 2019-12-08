@@ -2,6 +2,8 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.request import urlopen as uReq  # Web client
 import mysql.connector
+from flask import Flask
+from flask import request
 
 myconn = mysql.connector.connect(
   host="localhost",
@@ -23,108 +25,89 @@ def insert_cars(carName,carYear,carModel,extColor,intColor,transmission,price,dr
         myconn.rollback()
     print(cur.rowcount,"Sutun eklendi")
 
-page_url ='https://www.cars.com/for-sale/searchresults.action/?dealerType=localOnly&mkId=20005&page=1&perPage=50&searchSource=GN_REFINEMENT&sort=relevance&zc=90006'
-uClient = uReq(page_url)
-page_soup = BeautifulSoup(uClient.read(), "html.parser")
-uClient.close()
+page_url =['https://www.cars.com/for-sale/searchresults.action/?dealerType=localOnly&mkId=20005&page=1&perPage=50&searchSource=GN_REFINEMENT&sort=relevance&zc=90006','https://www.cars.com/for-sale/searchresults.action/?dealerType=localOnly&mkId=20015&page=1&perPage=50&searchSource=GN_REFINEMENT&sort=relevance&zc=90006']
 
-car_name_list=[]
-extColor=[]
-intColor=[]
-transmission=[]
-driveTrain=[]
-year=[]
-price=[]
-number=[]
-model=[]
+for pages in range(len(page_url)):
+    uClient = uReq(page_url[pages])
+    page_soup = BeautifulSoup(uClient.read(), "html.parser")
+    uClient.close()
 
-bmw_names = page_soup.findAll("h2", {"class": "listing-row__title"})
-bmw_color = page_soup.findAll("ul",{"class": "listing-row__meta"})
-bmw_price = page_soup.findAll("span",{"class": "listing-row__price "})
-bmw_number = page_soup.findAll("div",{"class": "listing-row__phone obscure"})
+    car_name_list=[]
+    extColor=[]
+    intColor=[]
+    transmission=[]
+    driveTrain=[]
+    year=[]
+    price=[]
+    number=[]
+    model=[]
 
-
-for o in range(len(bmw_number)):
-    clean_bmw_number = str(bmw_number[o].getText)
-    clean_bmw_number =clean_bmw_number.replace('<bound method Tag.get_text of <div class="listing-row__phone obscure">',"")
-    clean_bmw_number =clean_bmw_number.replace('<span>',"")
-    clean_bmw_number =clean_bmw_number.replace('</span>',"")
-    clean_bmw_number =clean_bmw_number.replace('</div>>',"")
-    clean_bmw_number =clean_bmw_number.replace('()',"")
-    clean_bmw_number =clean_bmw_number.replace('<span class="dni-replace-',"")
-    clean_bmw_number =clean_bmw_number.replace('</div>>',"")
-    clean_bmw_number =clean_bmw_number.replace('<div class="obscured-placeholder">',"")
-    clean_bmw_number =clean_bmw_number.replace('-</div>',"")
-    clean_bmw_number =clean_bmw_number.replace('">(',"")
-    clean_bmw_number =clean_bmw_number.replace(') ',"")
-    clean_bmw_number =clean_bmw_number.replace('-',"")
-    clean_bmw_number = clean_bmw_number.split()
-    number.append(clean_bmw_number)
+    #aradiğimiz tagları cekiyoruz
+    bmw_names = page_soup.findAll("h2", {"class": "listing-row__title"})
+    bmw_color = page_soup.findAll("ul",{"class": "listing-row__meta"})
+    bmw_price = page_soup.findAll("span",{"class": "listing-row__price "})
+    bmw_number = page_soup.findAll("div",{"class": "listing-row__phone obscure"})
 
 
-number.append('0')
+    bmw_number_black_list=['<bound method Tag.get_text of <div class="listing-row__phone obscure">','<span>','</span>','</div>>','()','<span class="dni-replace-','<div class="obscured-placeholder">','-</div>','">(',') ','-']
+    bmw_price_black_list=['<bound method Tag.get_text of ','<span class="listing-row__price-msrp">','<span class="listing-row__mileage">','<span class="listing-row__price ">','</span>','</div>>','MSRP','>',"['"]
+    bmw_color_black_list=['<bound method Tag.get_text of ','<h2 class="listing-row__title">','</h2>>','\n','']
+    bmw_price_black_list_s=['<bound method Tag.get_text of ',"\n",'<ul class="listing-row__meta ">','</li><li>">','<ul class="listing-row__meta cpcTest--hide"><li><strong>','<li><strong>',':</strong>','</li>','</ul>>','           ','. ']
+    #Gereksiz karakterleri listeye atıyoruz
 
-#print(number)
-
-
-
-#Gereksiz karakterleri temizliyoruz
-
-
-for i in range(len(bmw_price)):
-    clean_bmw_price = str(bmw_price[i].getText)
-    clean_bmw_price =clean_bmw_price.replace('<bound method Tag.get_text of ',"")
-    clean_bmw_price =clean_bmw_price.replace('<span class="listing-row__price-msrp">' ,"")
-    clean_bmw_price =clean_bmw_price.replace('<span class="listing-row__mileage">' ,"")
-    clean_bmw_price =clean_bmw_price.replace('<span class="listing-row__price ">' ,"")
-    clean_bmw_price =clean_bmw_price.replace('</span>',"")
-    clean_bmw_price =clean_bmw_price.replace('</div>>',"")
-    clean_bmw_price =clean_bmw_price.replace('MSRP',"")
-    clean_bmw_price =clean_bmw_price.replace('>',"")
-    clean_bmw_price =clean_bmw_price.replace("['","")
-
-    clean_bmw_price = clean_bmw_price.split()
-    price.append(clean_bmw_price)
-
-#Sitede son 3 price degeri yok eksik değerleri 0 olarak giriyorum
-for x in range(47,52):
-    price.append('0')
+    for o in range(len(bmw_number)):
+        clean_bmw_number = str(bmw_number[o].getText)
+        for ı in range(len(bmw_number_black_list)):
+                clean_bmw_number =clean_bmw_number.replace(bmw_number_black_list[ı],"")
+        clean_bmw_number = clean_bmw_number.split()
+        number.append(clean_bmw_number)
+    number.append('0')
 
 
-        #bmw_price =bmw_price.replace('<span class="listing-row__price">',"")
-bmw_color_clean_text=['<bound method Tag.get_text of ','<h2 class="listing-row__title">','</h2>>','\n','']
-for i in range(len(bmw_color)):
-    clean_car=str(bmw_names[i].getText)
-    clean_car =clean_car.replace('<bound method Tag.get_text of ',"")
-    clean_car =clean_car.replace('<h2 class="listing-row__title">',"")
-    clean_car =clean_car.replace("</h2>>","")
-    clean_car=clean_car.replace("\n","")
-    clean_car=clean_car.replace("","")
-    clean_car = clean_car[33:len(clean_car)]
-    clean_car='2'+clean_car
-    #print(clean_car)
-    car_name_list.append(clean_car)
-    model.append(clean_car[5:len(clean_car)])
-    clean_bmw_color = str(bmw_color[i].getText)
-    clean_bmw_color =clean_bmw_color.replace('<bound method Tag.get_text of ',"")
-    clean_bmw_color=clean_bmw_color.replace("\n","")
-    clean_bmw_color=clean_bmw_color.replace('<ul class="listing-row__meta ">',"")
-    clean_bmw_color=clean_bmw_color.replace('</li><li>">',"")
-    clean_bmw_color=clean_bmw_color.replace('<ul class="listing-row__meta cpcTest--hide"><li><strong>',"")
-    clean_bmw_color=clean_bmw_color.replace('<li><strong>',"")
-    clean_bmw_color=clean_bmw_color.replace(':</strong>',"")
-    clean_bmw_color=clean_bmw_color.replace('</li>',"")
-    clean_bmw_color=clean_bmw_color.replace('</ul>>',"")
-    clean_bmw_color=clean_bmw_color.replace('           ',"")
-    clean_bmw_color=clean_bmw_color.replace('. ',"")
-    clean_bmw_color = clean_bmw_color.split()
+    for i in range(len(bmw_price)):
+        clean_bmw_price = str(bmw_price[i].getText)
+        for pbl in range(len(bmw_price_black_list)):
+            clean_bmw_price =clean_bmw_price.replace(bmw_price_black_list[pbl],"")
+        clean_bmw_price = clean_bmw_price.split()
+        price.append(clean_bmw_price)
+
+    #Sitede son 3 price degeri yok eksik değerleri 0 olarak giriyorum
+    for x in range(47,52):
+        price.append('0')
+
+            #bmw_price =bmw_price.replace('<span class="listing-row__price">',"")
+    for i in range(len(bmw_color)):
+        clean_car=str(bmw_names[i].getText)
+        for bcbl in range(len(bmw_color_black_list)):
+            clean_car =clean_car.replace(bmw_color_black_list[bcbl],"")
+        clean_car = clean_car[33:len(clean_car)]
+        clean_car='2'+clean_car
+        #print(clean_car)
+        car_name_list.append(clean_car)
+        model.append(clean_car[5:len(clean_car)])
+        clean_bmw_color = str(bmw_color[i].getText)
+        for bccl in range(len(bmw_price_black_list_s)):
+                clean_bmw_color =clean_bmw_color.replace(bmw_price_black_list_s[bccl],"")
+        clean_bmw_color = clean_bmw_color.split()
+        #Deger asimi olmamasi icin her sutun degeri için 1 dongu yapılacak
+        for j in range(len(clean_bmw_color) // 8):
+            extColor.append(clean_bmw_color[j+1])
+            intColor.append(clean_bmw_color[j+3])
+            transmission.append(clean_bmw_color[j+5])
+            driveTrain.append(clean_bmw_color[j+7])
+            year.append(clean_car[0:4])
+        insert_cars(car_name_list[i],year[i],str(model[i]),extColor[i],intColor[i],transmission[i],str(price[i]),driveTrain[i],str(number[i]))
+
+app = Flask(__name__)
+@app.route("/query")
+def query():
+
+    args = request.args
+
+    print(args)
+
+    return "No query string received", 200
 
 
-    for j in range(len(clean_bmw_color) // 8):
-        extColor.append(clean_bmw_color[j+1])
-        intColor.append(clean_bmw_color[j+3])
-        transmission.append(clean_bmw_color[j+5])
-        driveTrain.append(clean_bmw_color[j+7])
-        year.append(clean_car[0:4])
-    insert_cars(car_name_list[i],year[i],str(model[i]),extColor[i],intColor[i],transmission[i],str(price[i]),driveTrain[i],str(number[i]))
-
+if __name__ == "__main__":
+    app.run()
