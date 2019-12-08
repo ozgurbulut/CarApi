@@ -4,14 +4,37 @@ from urllib.request import urlopen as uReq  # Web client
 import mysql.connector
 from flask import Flask
 from flask import request
-
+from flask import jsonify
+from flask import render_template
 myconn = mysql.connector.connect(
   host="localhost",
   user="root",
   passwd="qeweqw123",
   database="sam"
 )
-
+#extcolor,intColor,price,brand,trans,name,year,name,drivetrain='','','','','','','','',''
+def select_all():
+    mycursor = myconn.cursor()
+    sql = '''SELECT * FROM sam.cars'''
+    mycursor.execute(sql)
+    myresult = mycursor.fetchall()
+    liste = []
+    for x in myresult:
+        liste.append(x)
+    return(liste)
+carName,carYear,carModel,extColor,intColor,transmission,price,driveTrain,number='','','','','','','','',''
+carYear='2019'
+extColor='Gray'
+def like_cars(carName,carYear,carModel,extColor,intColor,transmission,price,driveTrain,number):
+    mycursor = myconn.cursor()
+    sql = "SELECT * FROM sam.cars WHERE car_name LIKE '%%"+carName+"%' and car_year LIKE '%%"+carYear+"%' and car_model LIKE '%%"+carModel+"%'  and car_ext_color LIKE '%%"+extColor+"%' and car_int_color LIKE '%%"+intColor+"%' and transmission LIKE '%%"+transmission+"%' and price LIKE '%%"+price+"%' and number LIKE '%%"+number+"%' and drivetrain LIKE '%%"+driveTrain+"%' "
+    mycursor.execute(sql)
+    myresult = mycursor.fetchall()
+    for x in myresult:
+        print(x)
+    return(myresult)
+print(like_cars(carName,carYear,carModel,extColor,intColor,transmission,price,driveTrain,number))
+#like_cars(extcolor,intColor,price,brand,trans,name,year,name,drivetrain)
 def insert_cars(carName,carYear,carModel,extColor,intColor,transmission,price,driveTrain,number):
     cur = myconn.cursor()
     sql = '''INSERT INTO sam.cars (car_name, car_year,car_model,car_ext_color,car_int_color,transmission,price,number,drivetrain)
@@ -24,14 +47,14 @@ def insert_cars(carName,carYear,carModel,extColor,intColor,transmission,price,dr
     except:
         myconn.rollback()
     print(cur.rowcount,"Sutun eklendi")
-
+#Burada hangi sayfalardan veri cekeceksek onları listeliyoruz
 page_url =['https://www.cars.com/for-sale/searchresults.action/?dealerType=localOnly&mkId=20005&page=1&perPage=50&searchSource=GN_REFINEMENT&sort=relevance&zc=90006','https://www.cars.com/for-sale/searchresults.action/?dealerType=localOnly&mkId=20015&page=1&perPage=50&searchSource=GN_REFINEMENT&sort=relevance&zc=90006']
 
 for pages in range(len(page_url)):
     uClient = uReq(page_url[pages])
     page_soup = BeautifulSoup(uClient.read(), "html.parser")
     uClient.close()
-
+    #Temizlenmis hallerini bu listelere atacagiz
     car_name_list=[]
     extColor=[]
     intColor=[]
@@ -48,13 +71,13 @@ for pages in range(len(page_url)):
     bmw_price = page_soup.findAll("span",{"class": "listing-row__price "})
     bmw_number = page_soup.findAll("div",{"class": "listing-row__phone obscure"})
 
-
+    #İstenmeyen karakter dizilerini her tag bolumune gore inspect edip cekiyoruz
     bmw_number_black_list=['<bound method Tag.get_text of <div class="listing-row__phone obscure">','<span>','</span>','</div>>','()','<span class="dni-replace-','<div class="obscured-placeholder">','-</div>','">(',') ','-']
     bmw_price_black_list=['<bound method Tag.get_text of ','<span class="listing-row__price-msrp">','<span class="listing-row__mileage">','<span class="listing-row__price ">','</span>','</div>>','MSRP','>',"['"]
     bmw_color_black_list=['<bound method Tag.get_text of ','<h2 class="listing-row__title">','</h2>>','\n','']
     bmw_price_black_list_s=['<bound method Tag.get_text of ',"\n",'<ul class="listing-row__meta ">','</li><li>">','<ul class="listing-row__meta cpcTest--hide"><li><strong>','<li><strong>',':</strong>','</li>','</ul>>','           ','. ']
-    #Gereksiz karakterleri listeye atıyoruz
 
+    #Gereksiz karakterleri split ile temizliyoruz
     for o in range(len(bmw_number)):
         clean_bmw_number = str(bmw_number[o].getText)
         for ı in range(len(bmw_number_black_list)):
@@ -99,14 +122,39 @@ for pages in range(len(page_url)):
         insert_cars(car_name_list[i],year[i],str(model[i]),extColor[i],intColor[i],transmission[i],str(price[i]),driveTrain[i],str(number[i]))
 
 app = Flask(__name__)
+
+
 @app.route("/query")
 def query():
-
+    #Varsayılan degerleri null veriyoruz sql sorgusunda hata donmesin diye
     args = request.args
+    if 'extcolor' in args:
+                extcolor = args.get("extcolor")
+    if 'intcolor' in args:
+                intColor = args.get("intcolor")
+    if 'price' in args:
+                price = args.get("price")
+    if 'brand' in args:
+                brand = args.get("brand")
+    if 'trans' in args:
+                trans = args.get("trans")
+    if 'name' in args:
+                name = args.get("name")
+    if 'year' in args:
+                year = args.get("year")
+    if 'name' in args:
+                name = args.get("name")
+    if 'drivetrain' in args:
+                drivetrain = args.get("drivetrain")
+    carName,carYear,carModel,extColor,intColor,transmission,price,driveTrain,number='','','','','','','','',''
+    query_like = like_cars(carName,carYear,carModel,extColor,intColor,transmission,price,driveTrain,number)
+    #return render_template('like.html',list=query_like)
+    return render_template('like.html',list=query_like)
 
-    print(args)
-
-    return "No query string received", 200
+@app.route("/cars/list")
+def cars():
+    all=select_all()
+    return render_template('list.html',list=all)
 
 
 if __name__ == "__main__":
